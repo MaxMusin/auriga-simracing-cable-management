@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { ThreeScene, ThreeSceneRef } from './components/ThreeScene'
+import { Analytics } from '@vercel/analytics/react'
 import './style.css'
 
 interface Parameters {
@@ -24,6 +25,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-[#0b0f14] text-white">
+      <Analytics />
       {/* Sidebar */}
       <aside className="w-[280px] max-w-[40vw] p-6 overflow-auto bg-[#00141D] flex flex-col justify-between">
         <div>
