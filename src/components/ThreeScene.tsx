@@ -156,6 +156,11 @@ export const ThreeScene = forwardRef<ThreeSceneRef, ThreeSceneProps>(({ paramete
       
       geometry.computeVertexNormals()
       geometry.computeBoundingBox()
+      
+      // Get the bounding box before centering to calculate offset
+      const bbox = geometry.boundingBox!
+      const yOffset = -(bbox.min.y) // This will put the bottom of the model at y=0
+      
       geometry.center()
 
       const material = new THREE.MeshStandardMaterial({ 
@@ -167,6 +172,9 @@ export const ThreeScene = forwardRef<ThreeSceneRef, ThreeSceneProps>(({ paramete
       const mesh = new THREE.Mesh(geometry, material)
       mesh.castShadow = true
       mesh.receiveShadow = false // Disable receiving shadows to avoid internal shadow artifacts
+      
+      // Position the model above the grid (bottom of model at grid level + 5 units up)
+      mesh.position.y = yOffset + 2
 
       // Clear existing mesh
       if (sceneRef.current.mesh) {
@@ -222,16 +230,20 @@ export const ThreeScene = forwardRef<ThreeSceneRef, ThreeSceneProps>(({ paramete
 
     const scale = targetDepth / currentDepth
 
-    // Apply scaling to geometry
+    // Apply scaling to geometry (only scale Z-axis, keep X and Y unchanged)
     const newGeometry = baseGeometry.clone()
     const scaleMatrix = new THREE.Matrix4().makeScale(1, 1, scale)
     newGeometry.applyMatrix4(scaleMatrix)
     newGeometry.computeVertexNormals()
     newGeometry.computeBoundingBox()
-
-    // Update mesh geometry
+    
+    // Keep the original Y position - don't recalculate it
+    // The Y position should remain constant regardless of depth scaling
+    
+    // Update mesh geometry but preserve Y position
     mesh.geometry.dispose()
     mesh.geometry = newGeometry
+    // Don't change mesh.position.y - keep it as set during initial load
 
     // Don't reset camera view - preserve current viewing angle
   }, [parameters.depth])
