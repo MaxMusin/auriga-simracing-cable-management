@@ -36,15 +36,19 @@ function App() {
           alt="Auriga Simracing Cable Management" 
           className="mb-4 max-w-full h-auto"
         />
-        <p className="text-gray-400 text-md mb-12 font-pixel">
+        <p className="text-gray-400 text-md mb-8 font-pixel">
           Generate 3D printable cable guides.
+        </p>
+        
+        <p className="text-gray-500 text-sm text-right font-pixel mb-2">
+          (mm)
         </p>
         
         {/* Depth Parameter */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <label className="font-pixel text-sm tracking-[2px] text-white uppercase">
-              Depth (mm)
+              Depth
             </label>
             <input
               type="number"
@@ -85,7 +89,7 @@ function App() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <label className="font-pixel text-sm tracking-[2px] text-white uppercase">
-              Height (mm)
+              Height
             </label>
             <input
               type="number"
@@ -102,12 +106,12 @@ function App() {
                 // Clamp to valid range on blur
                 if (value < 10) {
                   updateParameter('height', 10)
-                } else if (value > 300) {
-                  updateParameter('height', 300)
+                } else if (value > 20) {
+                  updateParameter('height', 20)
                 }
               }}
               min={10}
-              max={300}
+              max={20}
               step={1}
               className="font-pixel text-sm text-white bg-transparent border border-gray-600 rounded px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-400"
             />
@@ -116,7 +120,7 @@ function App() {
             value={[parameters.height]}
             onValueChange={(value) => updateParameter('height', value[0])}
             min={10}
-            max={300}
+            max={20}
             step={1}
             className="w-full slider-custom"
           />

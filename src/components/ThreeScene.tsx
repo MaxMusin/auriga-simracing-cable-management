@@ -257,8 +257,11 @@ export const ThreeScene = forwardRef<ThreeSceneRef, ThreeSceneProps>(({ paramete
       const yRange = newBbox.max.y - newBbox.min.y
       const yThreshold = newBbox.min.y + (yRange * 0.55) // Inner corner at ~55% height
       
-      // Extrude vertices above the threshold (simplified approach)
-      const extrusionHeight = (heightScale - 1) * (newBbox.max.y - yThreshold)
+      // Extrude vertices above the threshold (height parameter represents total height)
+      // 10mm = baseline (no extrusion), anything above 10mm = additional height
+      // Scale down the extrusion to match actual mm (the model might be in different units)
+      const additionalHeight = Math.max(0, parameters.height - 10)
+      const extrusionHeight = additionalHeight * 0.5 // Scale factor to match actual mm
       
       if (extrusionHeight > 0) {
         // Move all vertices above the threshold, but only in the inner area
