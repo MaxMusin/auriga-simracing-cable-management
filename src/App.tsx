@@ -35,7 +35,7 @@ function App() {
           className="mb-4 max-w-full h-auto"
         />
         <p className="text-gray-400 text-md mb-12 font-pixel">
-          Generate 3D printable cable guide.
+          Generate 3D printable cable guides.
         </p>
         
         {/* Depth Parameter */}
