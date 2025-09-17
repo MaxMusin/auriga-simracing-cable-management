@@ -6,6 +6,7 @@ import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js'
 
 interface Parameters {
   depth: number
+  height: number
 }
 
 interface ThreeSceneProps {
@@ -212,41 +213,89 @@ export const ThreeScene = forwardRef<ThreeSceneRef, ThreeSceneProps>(({ paramete
     sceneRef.current.controls.update()
   }
 
-  // Apply depth scaling when parameters change
+  // Apply depth and height scaling when parameters change
   useEffect(() => {
     if (!sceneRef.current?.mesh || !sceneRef.current?.baseGeometry) return
 
     const { mesh, baseGeometry } = sceneRef.current
     const targetDepth = parameters.depth
+    const targetHeight = parameters.height
 
-    // Calculate current depth (Z-axis)
+    // Calculate current dimensions
     const positionAttribute = baseGeometry.getAttribute('position')
     if (!positionAttribute) return
     
     const bbox = new THREE.Box3().setFromBufferAttribute(positionAttribute as THREE.BufferAttribute)
     const currentDepth = bbox.max.z - bbox.min.z
+    const currentHeight = bbox.max.y - bbox.min.y
     
-    if (currentDepth <= 0) return
+    if (currentDepth <= 0 || currentHeight <= 0) return
 
-    const scale = targetDepth / currentDepth
+    const depthScale = targetDepth / currentDepth
+    const heightScale = targetHeight / currentHeight
 
-    // Apply scaling to geometry (only scale Z-axis, keep X and Y unchanged)
+    // Clone geometry for selective scaling
     const newGeometry = baseGeometry.clone()
-    const scaleMatrix = new THREE.Matrix4().makeScale(1, 1, scale)
-    newGeometry.applyMatrix4(scaleMatrix)
+    
+    // Apply depth scaling uniformly using matrix (affects entire model)
+    if (depthScale !== 1) {
+      const depthMatrix = new THREE.Matrix4().makeScale(1, 1, depthScale)
+      newGeometry.applyMatrix4(depthMatrix)
+    }
+    
+    // Apply selective height scaling from the inner corner point
+    if (heightScale !== 1) {
+      const newPositionAttribute = newGeometry.getAttribute('position') as THREE.BufferAttribute
+      const positions = newPositionAttribute.array as Float32Array
+      
+      // Recalculate bbox after depth scaling
+      newGeometry.computeBoundingBox()
+      const newBbox = newGeometry.boundingBox!
+      
+      // Find the inner corner Y coordinate - this is where the horizontal bridge 
+      // meets the vertical wall (roughly 75-80% up from bottom)
+      const yRange = newBbox.max.y - newBbox.min.y
+      const yThreshold = newBbox.min.y + (yRange * 0.55) // Inner corner at ~55% height
+      
+      // Extrude vertices above the threshold (simplified approach)
+      const extrusionHeight = (heightScale - 1) * (newBbox.max.y - yThreshold)
+      
+      if (extrusionHeight > 0) {
+        // Move all vertices above the threshold, but only in the inner area
+        const xRange = newBbox.max.x - newBbox.min.x
+        const centerX = (newBbox.min.x + newBbox.max.x) / 2
+        
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i]
+          const y = positions[i + 1]
+          
+          // Only move vertices that are:
+          // 1. Above the threshold
+          // 2. At the extremities (outer edges, not center)
+          const isAboveThreshold = y > yThreshold
+          const distanceFromCenter = Math.abs(x - centerX)
+          const isAtExtremity = distanceFromCenter > (xRange * 0.25) // Outer 50% on each side
+          
+          if (isAboveThreshold && isAtExtremity) {
+            positions[i + 1] += extrusionHeight
+          }
+        }
+      }
+      
+      newPositionAttribute.needsUpdate = true
+    }
+    
     newGeometry.computeVertexNormals()
     newGeometry.computeBoundingBox()
     
-    // Keep the original Y position - don't recalculate it
-    // The Y position should remain constant regardless of depth scaling
-    
-    // Update mesh geometry but preserve Y position
+    // Update mesh geometry but keep the original position
+    // Don't recalculate position - keep it as set during initial load
     mesh.geometry.dispose()
     mesh.geometry = newGeometry
-    // Don't change mesh.position.y - keep it as set during initial load
+    // Don't change mesh.position.y - it should stay at the original position
 
     // Don't reset camera view - preserve current viewing angle
-  }, [parameters.depth])
+  }, [parameters.depth, parameters.height])
 
   return (
     <canvas 

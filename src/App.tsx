@@ -7,11 +7,13 @@ import './style.css'
 
 interface Parameters {
   depth: number
+  height: number
 }
 
 function App() {
   const [parameters, setParameters] = useState<Parameters>({
     depth: 10,
+    height: 10,
   })
   const threeSceneRef = useRef<ThreeSceneRef>(null)
 
@@ -79,6 +81,47 @@ function App() {
           />
         </div>
 
+        {/* Height Parameter */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <label className="font-pixel text-sm tracking-[2px] text-white uppercase">
+              Height (mm)
+            </label>
+            <input
+              type="number"
+              value={parameters.height}
+              onChange={(e) => {
+                const value = Number(e.target.value)
+                // Allow any input while typing, validate on blur
+                if (!isNaN(value)) {
+                  updateParameter('height', value)
+                }
+              }}
+              onBlur={(e) => {
+                const value = Number(e.target.value)
+                // Clamp to valid range on blur
+                if (value < 10) {
+                  updateParameter('height', 10)
+                } else if (value > 300) {
+                  updateParameter('height', 300)
+                }
+              }}
+              min={10}
+              max={300}
+              step={1}
+              className="font-pixel text-sm text-white bg-transparent border border-gray-600 rounded px-2 py-1 w-16 text-center focus:outline-none focus:border-blue-400"
+            />
+          </div>
+          <Slider
+            value={[parameters.height]}
+            onValueChange={(value) => updateParameter('height', value[0])}
+            min={10}
+            max={300}
+            step={1}
+            className="w-full slider-custom"
+          />
+        </div>
+
         {/* Export Section */}
         <div className="border-t border-gray-600 pt-6">
           <Button 
@@ -91,7 +134,7 @@ function App() {
             variant="outline"
             className="w-full mt-3 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 font-pixel text-[12px] tracking-[1px] uppercase py-2 px-4 rounded-lg transition-colors"
             onClick={() => {
-              setParameters({ depth: 10 })
+              setParameters({ depth: 10, height: 10 })
             }}
           >
             Reset
